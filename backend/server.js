@@ -16,6 +16,11 @@ const port = process.env.PORT || 3000;
 const { connectDB } = require("./db/database.js");
 
 app.use(express.json());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+  }),
+);
 //exports it and destructures out the comments
 // const mockData = require("./mockdata.json");
 // let { comments } = mockData;
