@@ -1,3 +1,4 @@
+//all the routes for commments
 const express = require("express");
 const router = express.Router();
 

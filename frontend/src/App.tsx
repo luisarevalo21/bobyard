@@ -1,5 +1,5 @@
 import "./App.css";
-import Comments from "./Page/Comments";
+import Comments from "./Pages/Comments";
 function App() {
   return (
     <>

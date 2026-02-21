@@ -1,10 +1,7 @@
-const mockData = require("../mockdata.json");
-// let { comments } = mockData;
 const { db } = require("../db/database");
 
 const getAllComments = async (req, res) => {
-  //will be updated to get all the
-  // comments from db
+  //gets all the comments from the db
   try {
     const comments = await db.query("SELECT * FROM comments  ORDER BY id ASC");
     if (comments.rows.length === 0) {
@@ -20,10 +17,12 @@ const getAllComments = async (req, res) => {
 const getOneComment = async (req, res) => {
   const commentId = req.params.id;
 
+  //checkfs if a valid commentId was sent
   if (!commentId) {
     return res.status(404).json({ message: "invalid id provided" });
   }
   try {
+    //searches the db and checks if it found something and returns the data
     const foundComment = await db.query("SELECT * FROM comments WHERE id = $1", [commentId]);
     if (foundComment.rows.length === 0) {
       return res.status(404).json({ message: "comment not found" });
@@ -40,27 +39,23 @@ const updateComment = async (req, res) => {
   const updatedText = req.body.text;
 
   try {
-    //first chekcc if the value exists in the db
-    // const foundComment = await db.query("SELECT * FROM comments WHERE id = $1", [commentId]);
-
-    // if (foundComment.rows.length === 0) {
-    //   return res.status(404).json({ message: "uinable to find the coment " });
-    // }
-
-    const response = await db.query("UPDATE comments SET text = $1 WHERE id = $2", [updatedText, commentId]);
+    //updates the comment and returns the data back and send back to the frontend end.
+    const response = await db.query("UPDATE comments SET text = $1 WHERE id = $2 RETURNING *", [updatedText, commentId]);
     if (response.rowCount === 0) {
       return res.status(400).json({ message: "unable to update comment try again" });
     }
     console.log("repsonse", response);
-    return res.status(201).json({ message: "updated comment", commentId: commentId });
+    return res.status(201).json({ message: "updated comment", updatedComment: response.rows[0] });
   } catch (error) {
     console.log("error occured", error);
     return res.status(400).json({ message: "error occured" });
   }
 };
 
+//creates a new comment and sets an id can use uuvid for an automatic id but used random number for this app
+//can cause a duplicate key
 const postComment = async (req, res) => {
-  const { text, likes, image } = req.body;
+  const { text } = req.body;
   const id = Math.floor(Math.random() * (100 - 21 + 1)) + 20;
   const author = "Admin";
   const date = new Date().toISOString();
@@ -71,18 +66,19 @@ const postComment = async (req, res) => {
     author: "Admin",
     date: new Date().toISOString(),
     text: text,
-    likes: likes,
-    image: image,
+    likes: Math.floor(Math.random() * 100),
+    image: "https://picsum.photos/200",
   };
 
   try {
+    //adds to the db and returns the new comment created
     await db.query("INSERT INTO comments (id, author, date, text, likes, image)  VALUES ($1, $2, $3, $4, $5, $6)", [
       id,
       author,
       date,
       text,
-      likes,
-      image,
+      newComment.likes,
+      newComment.image,
     ]);
     return res.status(201).json({ message: "successfully created new comment", newComment: newComment });
   } catch (error) {
@@ -92,13 +88,14 @@ const postComment = async (req, res) => {
 };
 
 // //delets all the comments BE CAREFUL!
-const deleteAllComments = async (req, res) => {
-  const response = await db.query("DELETE FROM comments");
+// const deleteAllComments = async (req, res) => {
+//   const response = await db.query("DELETE FROM comments");
 
-  console.log("response", response);
-  return res.status(200).json({ message: "deleted comments", comments: [] });
-};
+//   // console.log("response", response);
+//   return res.status(200).json({ message: "deleted comments", comments: [] });
+// };
 
+//deletes a single comment
 const deleteOneComment = async (req, res) => {
   const commentId = req.params.id;
   const response = await db.query("DELETE FROM comments WHERE id = $1", [commentId]);
@@ -106,7 +103,7 @@ const deleteOneComment = async (req, res) => {
   if (response.rowCount === 0) {
     return res.status(400).json({ message: "unable to delete comment not found try again" });
   }
-  return res.status(200).json({ message: `deleted comment with id : ${commentId}` });
+  return res.status(204).send();
 };
 
 module.exports = { getAllComments, getOneComment, deleteAllComments, deleteOneComment, postComment, updateComment };

@@ -1,5 +1,5 @@
 const Pool = require("pg").Pool;
-
+const createDatabase = require("./setup");
 const { comments } = require("../mockdata.json");
 const host = process.env.DB_HOST;
 const port = process.env.DB_PORT;
@@ -7,6 +7,7 @@ const username = process.env.DB_USERNAME;
 const password = process.env.DB_PASSWORD;
 const databaseName = process.env.DB_NAME;
 
+//creates the connection request and connects to the db
 const connectionURL = `postgres://${username}:${password}@${host}:${port}/${databaseName}`;
 
 const pool = new Pool({
@@ -14,11 +15,13 @@ const pool = new Pool({
 });
 const connectDB = async () => {
   try {
+    //once complete i create a conenction to the database and use it as my db
+    await createDatabase();
     const client = await pool.connect();
 
     console.log("Connection to the database successful");
 
-    // SQL query to create the table if it does not exist
+    // query to create the table comments if it doesnt exists
     const createTableQuery = `
             CREATE TABLE IF NOT EXISTS comments (
                 id SERIAL PRIMARY KEY not null,
@@ -33,6 +36,9 @@ const connectDB = async () => {
 
     // Insert data into the table
     for (const comment of comments) {
+      // if (comment.image === "") {
+      //   comment.image = "https://picsum.photos/200";
+      // }
       await client.query(
         "INSERT INTO comments (id, author, date, text, likes, image)  VALUES ($1, $2, $3, $4, $5, $6) on CONFLICT (id) DO NOTHING",
         [comment.id, comment.author, comment.date, comment.text, comment.likes, comment.image],

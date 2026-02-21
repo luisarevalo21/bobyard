@@ -1,16 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type SetStateAction, type Dispatch } from "react";
+import { type Comments } from "../types/comments";
+import { api } from "../api";
 
-// import
+//custom hook to save and store the comments
+const useComments = (): [Comments[], Dispatch<SetStateAction<Comments[]>>] => {
+  const [comments, setComments] = useState<Comments[]>([]);
 
-const useComments = () => {
-  const [comments, setComments] = useState([]);
   useEffect(() => {
     const getComments = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/comments");
-        const resJson = await response.json();
-
-        setComments(resJson);
+        const response = await api.get("/api/comments");
+        setComments(response.data);
       } catch (err) {
         console.log("err", err);
       }
@@ -18,7 +18,7 @@ const useComments = () => {
     getComments();
   }, []);
 
-  return [comments];
+  return [comments, setComments];
 };
 
 export default useComments;
